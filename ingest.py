@@ -1,26 +1,32 @@
 from utils.pdf_loader import load_pdf
 from utils.text_splitter import split_documents
 from utils.embedding_model import get_embedding_model
-from utils.vector_store import create_vector_store
+from utils.vector_store import create_vector_store, save_vector_store
 
-print("Loading PDF...")
 
-documents = load_pdf("data/Employee_Handbook_Sample.pdf")
+def ingest(pdf_path):
 
-print(f"Loaded {len(documents)} pages.")
+    documents = load_pdf(pdf_path)
 
-print("Splitting document...")
+    chunks = split_documents(documents)
 
-chunks = split_documents(documents)
+    embedding_model = get_embedding_model()
 
-print(f"Created {len(chunks)} chunks.")
+    vector_store = create_vector_store(
+        chunks,
+        embedding_model
+    )
 
-print("Loading embedding model...")
+    save_vector_store(vector_store)
 
-embedding_model = get_embedding_model()
+    return len(documents), len(chunks)
 
-print("Creating FAISS index...")
 
-create_vector_store(chunks, embedding_model)
+if __name__ == "__main__":
 
-print("\nIngestion completed successfully!")
+    pages, chunks = ingest(
+        "data/Employee_Handbook_Sample.pdf"
+    )
+
+    print(f"Pages: {pages}")
+    print(f"Chunks: {chunks}")

@@ -1,15 +1,36 @@
 from langchain_community.vectorstores import FAISS
 
+
 def create_vector_store(chunks, embedding_model):
     """
-    Create and save the FAISS vector database.
+    Create and return a FAISS vector store.
     """
 
-    vectorstore = FAISS.from_documents(
+    vector_store = FAISS.from_documents(
         documents=chunks,
         embedding=embedding_model
     )
 
-    vectorstore.save_local("faiss_index")
+    return vector_store
 
-    return vectorstore
+
+def save_vector_store(vector_store):
+    """
+    Save the vector store locally.
+    """
+
+    vector_store.save_local("faiss_index")
+
+
+def load_vector_store(embedding_model):
+    """
+    Load an existing FAISS vector store.
+    """
+
+    vector_store = FAISS.load_local(
+        "faiss_index",
+        embedding_model,
+        allow_dangerous_deserialization=True
+    )
+
+    return vector_store

@@ -1,63 +1,51 @@
 from utils.embedding_model import get_embedding_model
+from utils.vector_store import load_vector_store
 from utils.llm import get_llm
 from utils.prompt import get_prompt
 
-from langchain_community.vectorstores import FAISS
 from langchain_core.output_parsers import StrOutputParser
 
 
-def load_vector_store():
+def ask_question(question):
+
     embedding_model = get_embedding_model()
 
-    vector_store = FAISS.load_local(
-        "faiss_index",
-        embedding_model,
-        allow_dangerous_deserialization=True
+    vector_store = load_vector_store(
+        embedding_model
     )
 
-    return vector_store
+    docs = vector_store.similarity_search(
+        question,
+        k=3
+    )
 
+    context = "\n\n".join(
+        [doc.page_content for doc in docs]
+    )
 
-def main():
+    chain = (
+        get_prompt()
+        | get_llm()
+        | StrOutputParser()
+    )
 
-    print("=" * 60)
-    print("      PDF RAG Chatbot")
-    print("=" * 60)
+    answer = chain.invoke(
+        {
+            "context": context,
+            "question": question
+        }
+    )
 
-    vector_store = load_vector_store()
-
-    llm = get_llm()
-
-    prompt = get_prompt()
-
-    parser = StrOutputParser()
-
-    chain = prompt | llm | parser
-
-    while True:
-
-        question = input("\nAsk a question (type 'exit' to quit): ")
-
-        if question.lower() == "exit":
-            print("\nGoodbye!")
-            break
-
-        docs = vector_store.similarity_search(question, k=3)
-
-        context = "\n\n".join(
-            [doc.page_content for doc in docs]
-        )
-
-        answer = chain.invoke(
-            {
-                "context": context,
-                "question": question
-            }
-        )
-
-        print("\nAnswer:\n")
-        print(answer)
+    return answer
 
 
 if __name__ == "__main__":
-    main()
+
+    while True:
+
+        question = input("Ask: ")
+
+        if question.lower() == "exit":
+            break
+
+        print(ask_question(question))
