@@ -25,43 +25,65 @@ with st.sidebar:
 
     st.header("Upload PDF")
 
-    uploaded_file = st.file_uploader(
+    uploaded_files = st.file_uploader(
         "Choose a PDF",
-        type="pdf"
+        type="pdf",
+        accept_multiple_files=True
     )
 
     process = st.button("Process Document")
 
     if process:
 
-        if uploaded_file is None:
+        if not uploaded_files:
             st.warning("Please upload a PDF first.")
 
         else:
 
             with st.spinner("Processing document..."):
 
-                with tempfile.NamedTemporaryFile(
-                    delete=False,
-                    suffix=".pdf"
-                ) as temp_pdf:
+               pdf_files = []
 
-                    temp_pdf.write(uploaded_file.read())
+               for uploaded_file in uploaded_files:
 
-                    temp_path = temp_pdf.name
+                    with tempfile.NamedTemporaryFile(
+                        delete=False,
+                        suffix=".pdf"
+                    ) as temp_pdf:
 
-                pages, chunks = ingest(
-                    temp_path,
-                    uploaded_file.name
-                )
+                        temp_pdf.write(uploaded_file.read())
 
-                st.session_state.chatbot = RAGChatbot()
+                        pdf_files.append(
+                            (
+                                temp_pdf.name,
+                                uploaded_file.name
+                            )
+                        )
 
-                os.remove(temp_path)
+               pages, chunks = ingest(pdf_files)
 
-            st.success(
-                f"Document processed successfully!\n\nPages: {pages}\nChunks: {chunks}"
-            )
+               for path, _ in pdf_files:
+                    os.remove(path)
+
+               # Initialize chatbot
+               st.session_state.chatbot = RAGChatbot()
+
+               # Create the chatbot after processing
+               st.session_state.chatbot = RAGChatbot()
+
+               # Success message
+               st.success(
+                   f"""
+               Processed Successfully!
+
+               Documents: {len(uploaded_files)}
+
+               Pages: {pages}
+
+               Chunks: {chunks}
+               """
+               )
+            
 
 
 for message in st.session_state.messages:

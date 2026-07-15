@@ -4,11 +4,17 @@ from utils.embedding_model import get_embedding_model
 from utils.vector_store import create_vector_store, save_vector_store
 
 
-def ingest(pdf_path, original_filename=None):
+def ingest(pdf_files):
 
-    documents = load_pdf(pdf_path, original_filename)
+    all_documents = []
 
-    chunks = split_documents(documents)
+    for pdf_path, filename in pdf_files:
+
+        documents = load_pdf(pdf_path, filename)
+
+        all_documents.extend(documents)
+
+    chunks = split_documents(all_documents)
 
     embedding_model = get_embedding_model()
 
@@ -19,14 +25,4 @@ def ingest(pdf_path, original_filename=None):
 
     save_vector_store(vector_store)
 
-    return len(documents), len(chunks)
-
-
-if __name__ == "__main__":
-
-    pages, chunks = ingest(
-        "data/Employee_Handbook_Sample.pdf"
-    )
-
-    print(f"Pages: {pages}")
-    print(f"Chunks: {chunks}")
+    return len(all_documents), len(chunks)
