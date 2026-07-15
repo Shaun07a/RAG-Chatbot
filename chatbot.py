@@ -6,40 +6,59 @@ from utils.prompt import get_prompt
 from langchain_core.output_parsers import StrOutputParser
 
 
-def ask_question(question):
+class RAGChatbot:
 
-    embedding_model = get_embedding_model()
+    def __init__(self):
 
-    vector_store = load_vector_store(
-        embedding_model
-    )
+        self.embedding_model = get_embedding_model()
 
-    docs = vector_store.similarity_search(
-        question,
-        k=3
-    )
+        self.vector_store = load_vector_store(
+            self.embedding_model
+        )
 
-    context = "\n\n".join(
-        [doc.page_content for doc in docs]
-    )
+        self.chain = (
+            get_prompt()
+            | get_llm()
+            | StrOutputParser()
+        )
 
-    chain = (
-        get_prompt()
-        | get_llm()
-        | StrOutputParser()
-    )
+    def ask(self, question):
 
-    answer = chain.invoke(
-        {
-            "context": context,
-            "question": question
-        }
-    )
+        docs = self.vector_store.similarity_search(
+            question,
+            k=3
+        )
 
-    return answer
+        context = "\n\n".join(
+            [doc.page_content for doc in docs]
+        )
+
+        sources = []
+
+        for doc in docs:
+
+            sources.append(
+                {
+                    "source": doc.metadata.get(
+                        "filename",
+                        doc.metadata.get("source", "Unknown")
+                    ),
+                    "page": doc.metadata.get("page", "Unknown")
+                }
+            )
+        answer = self.chain.invoke(
+            {
+                "context": context,
+                "question": question
+            }
+        )
+
+        return answer, sources
 
 
 if __name__ == "__main__":
+
+    chatbot = RAGChatbot()
 
     while True:
 
@@ -48,4 +67,13 @@ if __name__ == "__main__":
         if question.lower() == "exit":
             break
 
-        print(ask_question(question))
+        answer, sources = chatbot.ask(question)
+
+        print("\nAnswer:\n")
+
+        print(answer)
+
+        print("\nSources:")
+
+        for source in sources:
+            print(source)

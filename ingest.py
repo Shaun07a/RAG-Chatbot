@@ -4,9 +4,9 @@ from utils.embedding_model import get_embedding_model
 from utils.vector_store import create_vector_store, save_vector_store
 
 
-def ingest(pdf_path):
+def ingest(pdf_path, original_filename=None):
 
-    documents = load_pdf(pdf_path)
+    documents = load_pdf(pdf_path, original_filename)
 
     chunks = split_documents(documents)
 
