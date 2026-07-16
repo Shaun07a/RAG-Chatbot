@@ -19,19 +19,69 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🤖 PDF RAG Chatbot")
+st.title("📚 AI Document Assistant")
+st.caption("Ask questions about one or more uploaded PDF documents.")
 
 with st.sidebar:
 
     st.header("Upload PDF")
 
     uploaded_files = st.file_uploader(
-        "Choose a PDF",
+        "Choose PDF(s)",
         type="pdf",
         accept_multiple_files=True
     )
 
     process = st.button("Process Document")
+
+    st.divider()
+
+    st.subheader("Knowledge Base")
+
+    if "stats" not in st.session_state:
+        st.session_state.stats = {
+            "documents": 0,
+            "pages": 0,
+            "chunks": 0
+        }
+
+    stats = st.session_state.stats
+
+    if stats["documents"] == 0:
+
+        st.info("No documents loaded.")
+
+    else:
+
+        st.metric("Documents", stats["documents"])
+        st.metric("Pages", stats["pages"])
+        st.metric("Chunks", stats["chunks"])
+
+    
+
+    
+
+    st.divider()
+
+    st.subheader("Loaded Documents")
+
+    if uploaded_files:
+
+        for file in uploaded_files:
+
+            st.write(f"• {file.name}")
+
+    
+
+    
+
+    st.divider()
+
+    if st.button("Clear Chat"):
+
+        st.session_state.messages = []
+
+        st.rerun()
 
     if process:
 
@@ -62,14 +112,24 @@ with st.sidebar:
 
                pages, chunks = ingest(pdf_files)
 
+               st.session_state.document_names = [
+                    file.name for file in uploaded_files
+                ]
+
+               st.session_state.stats = {
+                    "documents": len(uploaded_files),
+                    "pages": pages,
+                    "chunks": chunks
+                }
+
                for path, _ in pdf_files:
                     os.remove(path)
 
                # Initialize chatbot
                st.session_state.chatbot = RAGChatbot()
 
-               # Create the chatbot after processing
-               st.session_state.chatbot = RAGChatbot()
+
+              
 
                # Success message
                st.success(
@@ -163,4 +223,3 @@ if question:
     )
 
 
-st.write("Ask questions about your uploaded document.")
