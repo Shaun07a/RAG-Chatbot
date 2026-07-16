@@ -189,6 +189,3 @@ Through this project I gained practical experience with:
 
 **Shaun Joseph**
 
-GitHub: https://github.com/your-github-username
-
-LinkedIn: https://linkedin.com/in/your-linkedin
