@@ -3,6 +3,7 @@ from utils.vector_store import load_vector_store
 from utils.llm import get_llm
 from utils.prompt import get_prompt
 
+
 from langchain_core.output_parsers import StrOutputParser
 
 
@@ -22,15 +23,23 @@ class RAGChatbot:
             | StrOutputParser()
         )
 
+        
     def ask(self, question):
 
-        docs = self.vector_store.similarity_search(
-            question,
-            k=3
+        retriever = self.vector_store.as_retriever(
+            search_type="mmr",
+            search_kwargs={
+                "k": 4,
+                "fetch_k": 10,
+                "lambda_mult": 0.7
+            }
         )
 
-        context = "\n\n".join(
-            [doc.page_content for doc in docs]
+        docs = retriever.invoke(question)
+
+        context = "\n\n---\n\n".join(
+            doc.page_content
+            for doc in docs
         )
 
         sources = []
@@ -46,10 +55,12 @@ class RAGChatbot:
                     "page": doc.metadata.get("page", "Unknown")
                 }
             )
+
         answer = self.chain.invoke(
             {
                 "context": context,
-                "question": question
+                "question": question,
+                "history": ""     # Empty for now
             }
         )
 

@@ -1,25 +1,27 @@
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import PromptTemplate
+
 
 def get_prompt():
 
-    prompt = ChatPromptTemplate.from_template(
+    return PromptTemplate.from_template(
         """
-You are a helpful AI assistant.
+You are a helpful AI document assistant.
 
-Answer the user's question ONLY using the context provided below.
+Use ONLY the information provided in the context to answer the question.
 
-If the answer is not present in the context, say:
+If the answer is not present in the context, simply say:
 
-"I couldn't find that information in the uploaded document."
+"I couldn't find that information in the uploaded documents."
 
-Context:
+Previous Conversation:
+{history}
+
+Retrieved Context:
 {context}
 
-Question:
+Current Question:
 {question}
 
 Answer:
 """
     )
-
-    return prompt
